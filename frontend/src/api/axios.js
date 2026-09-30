@@ -57,15 +57,17 @@ api.interceptors.response.use(
       config: error.config,
     });
 
+    const DEFAULT_DOCS = [
+      { id: 1, original_name: 'rahul_aadhaar_card.pdf', document_type: 'aadhaar', verification_status: 'verified', verification_score: 95, ocr_confidence: 94, created_at: new Date(Date.now() - 86400000 * 2).toISOString(), user_name: 'Rahul Sharma', user_email: 'user1@sdvs.com' },
+      { id: 2, original_name: 'rahul_pan_card.jpg', document_type: 'pan', verification_status: 'verified', verification_score: 92, ocr_confidence: 91, created_at: new Date(Date.now() - 86400000).toISOString(), user_name: 'Rahul Sharma', user_email: 'user1@sdvs.com' },
+      { id: 3, original_name: 'ananya_passport.png', document_type: 'passport', verification_status: 'needs_review', verification_score: 72, ocr_confidence: 78, created_at: new Date(Date.now() - 43200000).toISOString(), user_name: 'Ananya Gupta', user_email: 'user2@sdvs.com' },
+      { id: 4, original_name: 'ananya_employee_id.pdf', document_type: 'employee_id', verification_status: 'pending', verification_score: 88, ocr_confidence: 89, created_at: new Date().toISOString(), user_name: 'Ananya Gupta', user_email: 'user2@sdvs.com' }
+    ];
+
     if (url.includes('/documents/my') || (url.includes('/admin/documents') && method === 'get')) {
       return Promise.resolve(mockResponse({
-        documents: [
-          { id: 1, original_name: 'rahul_aadhaar_card.pdf', document_type: 'aadhaar', verification_status: 'verified', verification_score: 95, ocr_confidence: 94, created_at: new Date(Date.now() - 86400000 * 2).toISOString(), user_name: 'Rahul Sharma', user_email: 'user1@sdvs.com' },
-          { id: 2, original_name: 'rahul_pan_card.jpg', document_type: 'pan', verification_status: 'verified', verification_score: 92, ocr_confidence: 91, created_at: new Date(Date.now() - 86400000).toISOString(), user_name: 'Rahul Sharma', user_email: 'user1@sdvs.com' },
-          { id: 3, original_name: 'ananya_passport.png', document_type: 'passport', verification_status: 'needs_review', verification_score: 72, ocr_confidence: 78, created_at: new Date(Date.now() - 43200000).toISOString(), user_name: 'Ananya Gupta', user_email: 'user2@sdvs.com' },
-          { id: 4, original_name: 'ananya_employee_id.pdf', document_type: 'employee_id', verification_status: 'pending', verification_score: 88, ocr_confidence: 89, created_at: new Date().toISOString(), user_name: 'Ananya Gupta', user_email: 'user2@sdvs.com' }
-        ],
-        total: 4,
+        documents: DEFAULT_DOCS,
+        total: DEFAULT_DOCS.length,
         pagination: { page: 1, limit: 10, totalPages: 1 }
       }));
     }
@@ -113,8 +115,12 @@ api.interceptors.response.use(
     }
 
     if (url.includes('/admin/analytics')) {
+      const docStatsObj = { total: 48, verified: 38, pending: 4, rejected: 4, needs_review: 2, avg_score: 91.5, duplicates: 1, expired: 1 };
+      const userStatsObj = { total: 4, active: 4, verifiers: 1, admins: 1 };
       return Promise.resolve(mockResponse({
-        overview: { total_documents: 48, verified: 38, pending: 4, rejected: 4, needs_review: 2, avg_verification_score: 91.5 },
+        overview: docStatsObj,
+        docStats: docStatsObj,
+        userStats: userStatsObj,
         typeDistribution: [
           { document_type: 'aadhaar', count: 18, avg_score: 94 },
           { document_type: 'pan', count: 14, avg_score: 92 },
@@ -152,9 +158,9 @@ api.interceptors.response.use(
     if (url.includes('/admin/audit-logs')) {
       return Promise.resolve(mockResponse({
         logs: [
-          { id: 1, user_name: 'Rahul Sharma', action: 'document_upload', target_type: 'document', ip_address: '127.0.0.1', created_at: new Date(Date.now() - 3600000 * 4).toISOString() },
-          { id: 2, user_name: 'Verification Officer', action: 'manual_verification', target_type: 'document', ip_address: '127.0.0.1', created_at: new Date(Date.now() - 3600000 * 2).toISOString() },
-          { id: 3, user_name: 'System Admin', action: 'update_validation_rule', target_type: 'system', ip_address: '127.0.0.1', created_at: new Date(Date.now() - 3600000).toISOString() }
+          { id: 1, user_name: 'Rahul Sharma', action: 'document_upload', target_type: 'document', target_id: '1', ip_address: '127.0.0.1', created_at: new Date(Date.now() - 3600000 * 4).toISOString() },
+          { id: 2, user_name: 'Verification Officer', action: 'manual_verification', target_type: 'document', target_id: '3', ip_address: '127.0.0.1', created_at: new Date(Date.now() - 3600000 * 2).toISOString() },
+          { id: 3, user_name: 'System Admin', action: 'update_validation_rule', target_type: 'system', target_id: '1', ip_address: '127.0.0.1', created_at: new Date(Date.now() - 3600000).toISOString() }
         ],
         total: 3
       }));
@@ -171,11 +177,13 @@ api.interceptors.response.use(
     }
 
     if (url.includes('/verification/queue')) {
+      const queueDocs = [
+        { id: 3, original_name: 'ananya_passport.png', document_type: 'passport', verification_status: 'needs_review', verification_score: 72, created_at: new Date(Date.now() - 43200000).toISOString(), user_name: 'Ananya Gupta', user_email: 'user2@sdvs.com' },
+        { id: 4, original_name: 'ananya_employee_id.pdf', document_type: 'employee_id', verification_status: 'pending', verification_score: 88, created_at: new Date().toISOString(), user_name: 'Ananya Gupta', user_email: 'user2@sdvs.com' }
+      ];
       return Promise.resolve(mockResponse({
-        queue: [
-          { id: 3, original_name: 'ananya_passport.png', document_type: 'passport', verification_status: 'needs_review', verification_score: 72, created_at: new Date(Date.now() - 43200000).toISOString(), user_name: 'Ananya Gupta' },
-          { id: 4, original_name: 'ananya_employee_id.pdf', document_type: 'employee_id', verification_status: 'pending', verification_score: 88, created_at: new Date().toISOString(), user_name: 'Ananya Gupta' }
-        ],
+        queue: queueDocs,
+        documents: queueDocs,
         total: 2
       }));
     }
