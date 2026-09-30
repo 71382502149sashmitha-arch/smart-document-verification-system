@@ -18,18 +18,18 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/upload', label: 'Upload Document', icon: Upload },
-  { to: '/documents', label: 'My Documents', icon: FileText },
-  { to: '/verification-queue', label: 'Verification Queue', icon: CheckCircle },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'verifier'] },
+  { to: '/upload', label: 'Upload Document', icon: Upload, roles: ['user', 'admin'] },
+  { to: '/documents', label: 'My Documents', icon: FileText, roles: ['user', 'verifier', 'admin'] },
+  { to: '/verification-queue', label: 'Verification Queue', icon: CheckCircle, roles: ['user', 'verifier', 'admin'] },
 
-  { divider: true, label: 'Administration' },
+  { divider: true, label: 'Administration', roles: ['admin'] },
 
-  { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
-  { to: '/admin/users', label: 'Users', icon: Users },
-  { to: '/admin/documents', label: 'All Documents', icon: ClipboardList },
-  { to: '/admin/audit-logs', label: 'Audit Logs', icon: Shield },
-  { to: '/admin/settings', label: 'Settings', icon: Settings },
+  { to: '/admin/analytics', label: 'Analytics', icon: BarChart3, roles: ['admin'] },
+  { to: '/admin/users', label: 'Users', icon: Users, roles: ['admin'] },
+  { to: '/admin/documents', label: 'All Documents', icon: ClipboardList, roles: ['admin'] },
+  { to: '/admin/audit-logs', label: 'Audit Logs', icon: Shield, roles: ['admin'] },
+  { to: '/admin/settings', label: 'Settings', icon: Settings, roles: ['admin'] },
 ];
 
 export default function Sidebar() {
@@ -37,22 +37,11 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const isUserRole = user?.role === 'user';
-  const hiddenForUser = [
-    'Dashboard',
-    'Administration',
-    'Analytics',
-    'Users',
-    'All Documents',
-    'Audit Logs',
-    'Settings',
-  ];
+  const role = user?.role || 'user';
 
   const filteredNavItems = NAV_ITEMS.filter(item => {
-    if (isUserRole && item.label && hiddenForUser.includes(item.label)) {
-      return false;
-    }
-    return true;
+    if (!item.roles) return true;
+    return item.roles.includes(role);
   });
 
   return (
