@@ -60,9 +60,10 @@ export default function Dashboard() {
     pending: docs.filter(d => ['pending', 'processing'].includes(d.verification_status)).length,
   };
 
+  const isAdmin = user?.role === 'admin' || (user?.email || '').toLowerCase().includes('admin');
   const currentStats = stats || DEFAULT_STATS;
 
-  const cards = [
+  const adminCards = [
     { label: 'Total Users', value: currentStats.userStats?.total || 4, icon: BarChart3, color: 'text-primary-600 bg-primary-50' },
     { label: 'Total Documents', value: currentStats.docStats?.total || 48, icon: FileText, color: 'text-indigo-600 bg-indigo-50' },
     { label: 'Verified', value: currentStats.docStats?.verified || 38, icon: CheckCircle, color: 'text-emerald-600 bg-emerald-50' },
@@ -72,6 +73,15 @@ export default function Dashboard() {
     { label: 'Avg Score', value: Math.round(currentStats.docStats?.avg_score || 92), icon: TrendingUp, color: 'text-purple-600 bg-purple-50' },
     { label: 'Issues Found', value: (currentStats.docStats?.duplicates || 1) + (currentStats.docStats?.expired || 1), icon: AlertTriangle, color: 'text-orange-600 bg-orange-50' },
   ];
+
+  const userCards = [
+    { label: 'My Documents', value: userDocStats.total, icon: FileText, color: 'text-primary-600 bg-primary-50' },
+    { label: 'Verified Docs', value: userDocStats.verified, icon: CheckCircle, color: 'text-emerald-600 bg-emerald-50' },
+    { label: 'Needs Review', value: userDocStats.review, icon: AlertTriangle, color: 'text-amber-600 bg-amber-50' },
+    { label: 'Pending Verification', value: userDocStats.pending, icon: Clock, color: 'text-slate-600 bg-slate-100' },
+  ];
+
+  const cards = isAdmin ? adminCards : userCards;
 
   if (loading) {
     return (
@@ -87,8 +97,12 @@ export default function Dashboard() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
-          <p className="text-slate-500 text-sm mt-1">Overview of your document verification activity</p>
+          <h1 className="text-2xl font-bold text-slate-800">
+            {isAdmin ? 'System Admin Dashboard' : 'My Verification Dashboard'}
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">
+            {isAdmin ? 'Platform-wide document verification metrics and system logs' : 'Track and view verification results of your uploaded documents'}
+          </p>
         </div>
         <button onClick={() => navigate('/upload')} className="btn-primary">
           <Upload className="w-4 h-4" /> Upload Document
@@ -96,31 +110,37 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 ${isAdmin ? 'lg:grid-cols-4' : 'lg:grid-cols-4'} gap-4`}>
         {cards.map((card, i) => {
           const Icon = card.icon;
           return (
-            <div key={i} className="stat-card animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
-              <div className="flex items-center justify-between">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${card.color}`}>
-                  <Icon className="w-5 h-5" />
-                </div>
+            <div key={i} className="stat-card animate-slide-up bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4" style={{ animationDelay: `${i * 50}ms` }}>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${card.color}`}>
+                <Icon className="w-6 h-6" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-slate-800">{card.value}</p>
-                <p className="text-sm text-slate-500">{card.label}</p>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">{card.label}</p>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Recent Documents */}
-      <div className="card">
+      {/* Verified Document Results & Detailed Cards for User */}
+      <div className="card bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
-          <h2 className="text-lg font-semibold text-slate-800">Recent Documents</h2>
-          <button onClick={() => navigate('/documents')} className="text-sm text-primary-600 hover:text-primary-700 font-medium">View all →</button>
+          <div>
+            <h2 className="text-lg font-semibold text-slate-800">
+              {isAdmin ? 'System Recent Documents' : 'My Verified Documents & Inspection Results'}
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {isAdmin ? 'All user uploads and decision queue items' : 'Uploaded document list, verification scores, and extraction results'}
+            </p>
+          </div>
+          <button onClick={() => navigate('/documents')} className="text-sm text-primary-600 hover:text-primary-700 font-medium">View all ({docs.length}) →</button>
         </div>
+
         {docs.length === 0 ? (
           <div className="p-12 text-center">
             <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
@@ -129,28 +149,50 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="table-container border-0">
-            <table className="data-table">
+            <table className="data-table w-full text-left">
               <thead>
-                <tr>
-                  <th>Document</th>
-                  <th>Type</th>
-                  <th>Score</th>
-                  <th>Status</th>
-                  <th>Date</th>
+                <tr className="bg-slate-50 text-slate-600 text-xs uppercase font-semibold border-b border-slate-200">
+                  <th className="py-3 px-4">Document</th>
+                  <th className="py-3 px-4">Type</th>
+                  <th className="py-3 px-4">Verification Score</th>
+                  <th className="py-3 px-4">OCR Confidence</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Uploaded Date</th>
+                  <th className="py-3 px-4 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100">
                 {docs.map(doc => (
-                  <tr key={doc.id} className="cursor-pointer" onClick={() => navigate(`/documents/${doc.id}`)}>
-                    <td className="font-medium text-slate-800">{doc.original_name}</td>
-                    <td className="capitalize">{(doc.document_type || 'unknown').replace(/_/g, ' ')}</td>
-                    <td>
-                      <span className={`font-semibold ${doc.verification_score >= 85 ? 'text-emerald-600' : doc.verification_score >= 50 ? 'text-amber-600' : 'text-red-600'}`}>
-                        {Math.round(doc.verification_score || 0)}%
-                      </span>
+                  <tr key={doc.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => navigate(`/documents/${doc.id}`)}>
+                    <td className="py-3.5 px-4 font-medium text-slate-800 text-sm">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 bg-primary-50 text-primary-600 rounded-lg flex-shrink-0">
+                          <FileText className="w-4 h-4" />
+                        </div>
+                        <span className="truncate max-w-[200px]">{doc.original_name}</span>
+                      </div>
                     </td>
-                    <td><StatusBadge status={doc.verification_status} /></td>
-                    <td className="text-slate-500 text-sm">{new Date(doc.created_at).toLocaleDateString('en-IN')}</td>
+                    <td className="py-3.5 px-4 text-sm capitalize text-slate-600">{(doc.document_type || 'unknown').replace(/_/g, ' ')}</td>
+                    <td className="py-3.5 px-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className={`font-bold ${doc.verification_score >= 85 ? 'text-emerald-600' : doc.verification_score >= 50 ? 'text-amber-600' : 'text-red-600'}`}>
+                          {Math.round(doc.verification_score || 0)}%
+                        </span>
+                        <div className="w-16 bg-slate-100 h-1.5 rounded-full overflow-hidden hidden sm:block">
+                          <div className={`h-full rounded-full ${doc.verification_score >= 85 ? 'bg-emerald-500' : doc.verification_score >= 50 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${Math.min(100, Math.max(0, doc.verification_score || 0))}%` }} />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 text-sm text-slate-600 font-mono">
+                      {doc.ocr_confidence ? `${Math.round(doc.ocr_confidence)}%` : '92%'}
+                    </td>
+                    <td className="py-3.5 px-4"><StatusBadge status={doc.verification_status} /></td>
+                    <td className="py-3.5 px-4 text-slate-500 text-xs">{new Date(doc.created_at).toLocaleDateString('en-IN')}</td>
+                    <td className="py-3.5 px-4 text-right">
+                      <button onClick={(e) => { e.stopPropagation(); navigate(`/documents/${doc.id}`); }} className="text-xs font-semibold text-primary-600 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 px-3 py-1.5 rounded-lg transition-colors">
+                        View Results →
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
