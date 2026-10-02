@@ -19,19 +19,28 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = [
+  // Shared Dashboard
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/upload', label: 'Upload Document', icon: Upload },
-  { to: '/documents', label: 'My Documents', icon: FileText },
-  { to: '/verification-queue', label: 'Verification Queue', icon: CheckCircle },
-  { to: '/verification-details', label: 'Document Verification Details', icon: ClipboardCheck, userOnly: true },
 
-  { divider: true, label: 'Administration', adminOnly: true },
+  // User Navigation
+  { to: '/upload', label: 'Upload Document', icon: Upload, role: 'user' },
+  { to: '/documents', label: 'My Documents', icon: FileText, role: 'user' },
+  { to: '/verification-queue', label: 'Verification Queue', icon: CheckCircle, role: 'user' },
+  { to: '/verification-details', label: 'Document Verification Details', icon: ClipboardCheck, role: 'user' },
 
-  { to: '/admin/analytics', label: 'Analytics', icon: BarChart3, adminOnly: true },
-  { to: '/admin/users', label: 'Users', icon: Users, adminOnly: true },
-  { to: '/admin/documents', label: 'All Documents', icon: ClipboardList, adminOnly: true },
-  { to: '/admin/audit-logs', label: 'Audit Logs', icon: Shield, adminOnly: true },
-  { to: '/admin/settings', label: 'Settings', icon: Settings, adminOnly: true },
+  // Verifier Navigation
+  { to: '/verification-queue', label: 'Verification Queue', icon: CheckCircle, role: 'verifier' },
+  { to: '/documents', label: 'Documents to Review', icon: FileText, role: 'verifier' },
+  { to: '/verification-details', label: 'Verification Details', icon: ClipboardCheck, role: 'verifier' },
+  { to: '/history', label: 'Verification History', icon: ClipboardList, role: 'verifier' },
+
+  // Admin Navigation
+  { divider: true, label: 'Administration', role: 'admin' },
+  { to: '/admin/analytics', label: 'Analytics', icon: BarChart3, role: 'admin' },
+  { to: '/admin/users', label: 'Users', icon: Users, role: 'admin' },
+  { to: '/admin/documents', label: 'All Documents', icon: ClipboardList, role: 'admin' },
+  { to: '/admin/audit-logs', label: 'Audit Logs', icon: Shield, role: 'admin' },
+  { to: '/admin/settings', label: 'Settings', icon: Settings, role: 'admin' },
 ];
 
 export default function Sidebar() {
@@ -39,14 +48,19 @@ export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useAuth();
 
-  const isAdmin = user?.role === 'admin' || (user?.email || '').toLowerCase().includes('admin');
+  const userRole = (user?.role || '').toLowerCase();
+  const userEmail = (user?.email || '').toLowerCase();
+
+  const isAdmin = userRole === 'admin' || userEmail.includes('admin');
+  const isVerifier = userRole === 'verifier' || userEmail.includes('verifier');
+  const isUser = !isAdmin && !isVerifier;
+
+  const activeRole = isAdmin ? 'admin' : isVerifier ? 'verifier' : 'user';
 
   const filteredNavItems = NAV_ITEMS.filter(item => {
-    if (isAdmin) {
-      return !item.userOnly;
-    }
-    if (item.adminOnly) return false;
-    return true;
+    // If item has no role property, it's shared across all roles
+    if (!item.role) return true;
+    return item.role === activeRole;
   });
 
   return (
@@ -129,7 +143,7 @@ export default function Sidebar() {
 
             return (
               <NavLink
-                key={item.to}
+                key={`${item.to}-${item.label}`}
                 to={item.to}
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) =>

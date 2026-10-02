@@ -36,6 +36,8 @@ export function AuthProvider({ children }) {
     } catch (err) {
       // Graceful demo fallback when backend API is unreachable
       const lowerEmail = (email || '').toLowerCase().trim();
+      let role = 'user';
+      let name = 'Demo User';
       if (lowerEmail === 'admin@sdvs.com' || lowerEmail === 'admin') {
         role = 'admin';
         name = 'System Admin';

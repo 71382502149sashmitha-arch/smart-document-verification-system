@@ -22,15 +22,17 @@ function ProtectedRoute({ children, adminOnly, verifierOnly }) {
   const { isAuthenticated, user } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-  const isAdmin = user?.role === 'admin' || (user?.email || '').toLowerCase().includes('admin');
-  const isVerifier = user?.role === 'verifier' || (user?.email || '').toLowerCase().includes('verifier');
-  const isUser = !isAdmin && !isVerifier;
+  const userRole = (user?.role || '').toLowerCase();
+  const userEmail = (user?.email || '').toLowerCase();
+
+  const isAdmin = userRole === 'admin' || userEmail.includes('admin');
+  const isVerifier = userRole === 'verifier' || userEmail.includes('verifier');
 
   if (adminOnly && !isAdmin) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  if (verifierOnly && isUser) {
+  if (verifierOnly && !(isAdmin || isVerifier)) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -38,14 +40,9 @@ function ProtectedRoute({ children, adminOnly, verifierOnly }) {
 }
 
 export default function AppRoutes() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
 
-  const isAdmin = user?.role === 'admin' || (user?.email || '').toLowerCase().includes('admin');
-  const isVerifier = user?.role === 'verifier' || (user?.email || '').toLowerCase().includes('verifier');
-
-  const defaultHome = isAuthenticated
-    ? (isAdmin ? '/admin/analytics' : isVerifier ? '/verification-queue' : '/dashboard')
-    : '/login';
+  const defaultHome = isAuthenticated ? '/dashboard' : '/login';
 
   return (
     <Routes>
