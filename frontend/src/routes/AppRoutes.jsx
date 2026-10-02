@@ -18,32 +18,41 @@ import AdminAnalytics from '../pages/Admin/AdminAnalytics.jsx';
 import AdminAuditLogs from '../pages/Admin/AdminAuditLogs.jsx';
 import AdminSettings from '../pages/Admin/AdminSettings.jsx';
 
-function ProtectedRoute({ children, roles, disallowUser }) {
+function ProtectedRoute({ children, adminOnly, verifierOnly }) {
   const { isAuthenticated, user } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  const isPrivileged = user?.role === 'admin' || user?.role === 'verifier' || (user?.email || '').toLowerCase().includes('admin') || (user?.email || '').toLowerCase().includes('verifier');
-  if (isPrivileged) return children;
 
-  if (user?.role === 'user' && disallowUser) {
-    return <Navigate to="/upload" replace />;
+  const isAdmin = user?.role === 'admin' || (user?.email || '').toLowerCase().includes('admin');
+  const isVerifier = user?.role === 'verifier' || (user?.email || '').toLowerCase().includes('verifier');
+  const isUser = !isAdmin && !isVerifier;
+
+  if (adminOnly && !isAdmin) {
+    return <Navigate to="/dashboard" replace />;
   }
-  if (roles && !roles.includes(user?.role)) {
-    return <Navigate to={user?.role === 'user' ? "/upload" : "/dashboard"} replace />;
+
+  if (verifierOnly && isUser) {
+    return <Navigate to="/dashboard" replace />;
   }
+
   return children;
 }
 
 export default function AppRoutes() {
   const { isAuthenticated, user } = useAuth();
 
-  const defaultHome = isAuthenticated ? (user?.role === 'user' ? '/upload' : '/dashboard') : '/login';
+  const isAdmin = user?.role === 'admin' || (user?.email || '').toLowerCase().includes('admin');
+  const isVerifier = user?.role === 'verifier' || (user?.email || '').toLowerCase().includes('verifier');
+
+  const defaultHome = isAuthenticated
+    ? (isAdmin ? '/admin/analytics' : isVerifier ? '/verification-queue' : '/dashboard')
+    : '/login';
 
   return (
     <Routes>
       <Route path="/login" element={isAuthenticated ? <Navigate to={defaultHome} replace /> : <Login />} />
       <Route path="/register" element={isAuthenticated ? <Navigate to={defaultHome} replace /> : <Register />} />
 
-      <Route path="/dashboard" element={<ProtectedRoute disallowUser><Dashboard /></ProtectedRoute>} />
+      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/upload" element={<ProtectedRoute><UploadDocument /></ProtectedRoute>} />
       <Route path="/documents" element={<ProtectedRoute><DocumentsList /></ProtectedRoute>} />
       <Route path="/documents/:id" element={<ProtectedRoute><DocumentDetail /></ProtectedRoute>} />
@@ -51,14 +60,14 @@ export default function AppRoutes() {
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
       <Route path="/verification-details" element={<ProtectedRoute><DocumentVerificationDetails /></ProtectedRoute>} />
-      <Route path="/verification-queue" element={<ProtectedRoute><VerificationQueue /></ProtectedRoute>} />
-      <Route path="/verify/:id" element={<ProtectedRoute><VerifyDocument /></ProtectedRoute>} />
+      <Route path="/verification-queue" element={<ProtectedRoute verifierOnly><VerificationQueue /></ProtectedRoute>} />
+      <Route path="/verify/:id" element={<ProtectedRoute verifierOnly><VerifyDocument /></ProtectedRoute>} />
 
-      <Route path="/admin/users" element={<ProtectedRoute disallowUser><AdminUsers /></ProtectedRoute>} />
-      <Route path="/admin/documents" element={<ProtectedRoute disallowUser><AdminDocuments /></ProtectedRoute>} />
-      <Route path="/admin/analytics" element={<ProtectedRoute disallowUser><AdminAnalytics /></ProtectedRoute>} />
-      <Route path="/admin/audit-logs" element={<ProtectedRoute disallowUser><AdminAuditLogs /></ProtectedRoute>} />
-      <Route path="/admin/settings" element={<ProtectedRoute disallowUser><AdminSettings /></ProtectedRoute>} />
+      <Route path="/admin/users" element={<ProtectedRoute adminOnly><AdminUsers /></ProtectedRoute>} />
+      <Route path="/admin/documents" element={<ProtectedRoute adminOnly><AdminDocuments /></ProtectedRoute>} />
+      <Route path="/admin/analytics" element={<ProtectedRoute adminOnly><AdminAnalytics /></ProtectedRoute>} />
+      <Route path="/admin/audit-logs" element={<ProtectedRoute adminOnly><AdminAuditLogs /></ProtectedRoute>} />
+      <Route path="/admin/settings" element={<ProtectedRoute adminOnly><AdminSettings /></ProtectedRoute>} />
 
       <Route path="/" element={<Navigate to={defaultHome} replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
