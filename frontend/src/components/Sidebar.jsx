@@ -12,7 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
-  X
+  X,
+  ClipboardCheck
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -22,14 +23,15 @@ const NAV_ITEMS = [
   { to: '/upload', label: 'Upload Document', icon: Upload },
   { to: '/documents', label: 'My Documents', icon: FileText },
   { to: '/verification-queue', label: 'Verification Queue', icon: CheckCircle },
+  { to: '/verification-details', label: 'Document Verification Details', icon: ClipboardCheck, userOnly: true },
 
-  { divider: true, label: 'Administration' },
+  { divider: true, label: 'Administration', adminOnly: true },
 
-  { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
-  { to: '/admin/users', label: 'Users', icon: Users },
-  { to: '/admin/documents', label: 'All Documents', icon: ClipboardList },
-  { to: '/admin/audit-logs', label: 'Audit Logs', icon: Shield },
-  { to: '/admin/settings', label: 'Settings', icon: Settings },
+  { to: '/admin/analytics', label: 'Analytics', icon: BarChart3, adminOnly: true },
+  { to: '/admin/users', label: 'Users', icon: Users, adminOnly: true },
+  { to: '/admin/documents', label: 'All Documents', icon: ClipboardList, adminOnly: true },
+  { to: '/admin/audit-logs', label: 'Audit Logs', icon: Shield, adminOnly: true },
+  { to: '/admin/settings', label: 'Settings', icon: Settings, adminOnly: true },
 ];
 
 export default function Sidebar() {
@@ -37,17 +39,13 @@ export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useAuth();
 
-  const isStandardUser = user?.role === 'user' && !(user?.email || '').toLowerCase().includes('admin') && !(user?.email || '').toLowerCase().includes('verifier');
+  const isAdmin = user?.role === 'admin' || (user?.email || '').toLowerCase().includes('admin');
 
   const filteredNavItems = NAV_ITEMS.filter(item => {
-    if (isStandardUser) {
-      // Standard user login: remove ADMINISTRATION menu header and all /admin/* & /verification-queue links
-      if (item.divider && item.label === 'Administration') return false;
-      if (item.to?.startsWith('/admin/')) return false;
-      if (item.to === '/verification-queue') return false;
-      return true;
+    if (isAdmin) {
+      return !item.userOnly;
     }
-    // Admin AND Verifier logins: keep Administration section and all management links
+    if (item.adminOnly) return false;
     return true;
   });
 

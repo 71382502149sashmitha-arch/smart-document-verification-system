@@ -11,6 +11,7 @@ import VerificationQueue from '../pages/VerificationQueue.jsx';
 import VerifyDocument from '../pages/VerifyDocument.jsx';
 import Profile from '../pages/Profile/index.jsx';
 import History from '../pages/History/History.jsx';
+import DocumentVerificationDetails from '../pages/DocumentVerificationDetails.jsx';
 import AdminUsers from '../pages/Admin/AdminUsers.jsx';
 import AdminDocuments from '../pages/Admin/AdminDocuments.jsx';
 import AdminAnalytics from '../pages/Admin/AdminAnalytics.jsx';
@@ -49,6 +50,7 @@ export default function AppRoutes() {
       <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
+      <Route path="/verification-details" element={<ProtectedRoute><DocumentVerificationDetails /></ProtectedRoute>} />
       <Route path="/verification-queue" element={<ProtectedRoute><VerificationQueue /></ProtectedRoute>} />
       <Route path="/verify/:id" element={<ProtectedRoute><VerifyDocument /></ProtectedRoute>} />
 
