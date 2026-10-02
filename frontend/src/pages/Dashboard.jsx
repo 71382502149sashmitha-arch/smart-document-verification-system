@@ -60,7 +60,7 @@ export default function Dashboard() {
     pending: docs.filter(d => ['pending', 'processing'].includes(d.verification_status)).length,
   };
 
-  const isAdmin = user?.role === 'admin' || (user?.email || '').toLowerCase().includes('admin');
+  const isPrivileged = user?.role === 'admin' || user?.role === 'verifier' || (user?.email || '').toLowerCase().includes('admin') || (user?.email || '').toLowerCase().includes('verifier');
   const currentStats = stats || DEFAULT_STATS;
 
   const adminCards = [
@@ -81,7 +81,7 @@ export default function Dashboard() {
     { label: 'Pending Verification', value: userDocStats.pending, icon: Clock, color: 'text-slate-600 bg-slate-100' },
   ];
 
-  const cards = isAdmin ? adminCards : userCards;
+  const cards = isPrivileged ? adminCards : userCards;
 
   if (loading) {
     return (
@@ -98,10 +98,10 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">
-            {isAdmin ? 'System Admin Dashboard' : 'My Verification Dashboard'}
+            {isPrivileged ? 'System Dashboard' : 'My Verification Dashboard'}
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            {isAdmin ? 'Platform-wide document verification metrics and system logs' : 'Track and view verification results of your uploaded documents'}
+            {isPrivileged ? 'Platform-wide document verification metrics and system logs' : 'Track and view verification results of your uploaded documents'}
           </p>
         </div>
         <button onClick={() => navigate('/upload')} className="btn-primary">
@@ -132,10 +132,10 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <div>
             <h2 className="text-lg font-semibold text-slate-800">
-              {isAdmin ? 'System Recent Documents' : 'My Verified Documents & Inspection Results'}
+              {isPrivileged ? 'System Recent Documents' : 'My Verified Documents & Inspection Results'}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              {isAdmin ? 'All user uploads and decision queue items' : 'Uploaded document list, verification scores, and extraction results'}
+              {isPrivileged ? 'All user uploads and decision queue items' : 'Uploaded document list, verification scores, and extraction results'}
             </p>
           </div>
           <button onClick={() => navigate('/documents')} className="text-sm text-primary-600 hover:text-primary-700 font-medium">View all ({docs.length}) →</button>

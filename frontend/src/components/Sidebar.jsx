@@ -37,19 +37,17 @@ export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useAuth();
 
-  const isAdmin = user?.role === 'admin' || (user?.email || '').toLowerCase().includes('admin');
-  const isVerifier = user?.role === 'verifier' || (user?.email || '').toLowerCase().includes('verifier');
+  const isStandardUser = user?.role === 'user' && !(user?.email || '').toLowerCase().includes('admin') && !(user?.email || '').toLowerCase().includes('verifier');
 
   const filteredNavItems = NAV_ITEMS.filter(item => {
-    if (isAdmin) return true;
-    if (isVerifier) {
+    if (isStandardUser) {
+      // Standard user login: remove ADMINISTRATION menu header and all /admin/* & /verification-queue links
+      if (item.divider && item.label === 'Administration') return false;
       if (item.to?.startsWith('/admin/')) return false;
+      if (item.to === '/verification-queue') return false;
       return true;
     }
-    // Standard user login: remove ADMINISTRATION header and admin links
-    if (item.divider && item.label === 'Administration') return false;
-    if (item.to?.startsWith('/admin/')) return false;
-    if (item.to === '/verification-queue') return false;
+    // Admin AND Verifier logins: keep Administration section and all management links
     return true;
   });
 
