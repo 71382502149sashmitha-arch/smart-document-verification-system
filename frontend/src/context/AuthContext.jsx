@@ -35,18 +35,17 @@ export function AuthProvider({ children }) {
       return userData;
     } catch (err) {
       // Graceful demo fallback when backend API is unreachable
-      let role = 'user';
-      let name = email.split('@')[0];
-      if (email === 'admin@sdvs.com') {
+      const lowerEmail = (email || '').toLowerCase().trim();
+      if (lowerEmail === 'admin@sdvs.com' || lowerEmail === 'admin') {
         role = 'admin';
         name = 'System Admin';
-      } else if (email === 'verifier@sdvs.com') {
+      } else if (lowerEmail === 'verifier@sdvs.com' || lowerEmail === 'verifier') {
         role = 'verifier';
         name = 'Verification Officer';
-      } else if (email === 'user1@sdvs.com') {
+      } else if (lowerEmail === 'user1@sdvs.com' || lowerEmail === 'user1' || lowerEmail === 'user') {
         role = 'user';
         name = 'Rahul Sharma';
-      } else if (email === 'user2@sdvs.com') {
+      } else if (lowerEmail === 'user2@sdvs.com' || lowerEmail === 'user2') {
         role = 'user';
         name = 'Ananya Gupta';
       }

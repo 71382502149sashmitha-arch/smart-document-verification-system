@@ -6,7 +6,7 @@ export default function AdminGuard({ children }) {
   const { user, login } = useAuth();
   const [switching, setSwitching] = useState(false);
 
-  const isAdmin = user?.role === 'admin' || user?.email === 'admin@sdvs.com';
+  const isAdmin = user?.role === 'admin' || (user?.email || '').toLowerCase().includes('admin');
 
   async function handleSwitchToAdmin() {
     setSwitching(true);

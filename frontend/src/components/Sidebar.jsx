@@ -35,8 +35,22 @@ const NAV_ITEMS = [
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user } = useAuth();
 
-  const filteredNavItems = NAV_ITEMS;
+  const isAdmin = user?.role === 'admin' || (user?.email || '').toLowerCase().includes('admin');
+  const isVerifier = user?.role === 'verifier' || (user?.email || '').toLowerCase().includes('verifier');
+
+  const filteredNavItems = NAV_ITEMS.filter(item => {
+    if (isAdmin) return true;
+    if (isVerifier) {
+      if (item.to?.startsWith('/admin/')) return false;
+      return true;
+    }
+    if (item.divider && item.label === 'Administration') return false;
+    if (item.to?.startsWith('/admin/')) return false;
+    if (item.to === '/verification-queue') return false;
+    return true;
+  });
 
   return (
     <>

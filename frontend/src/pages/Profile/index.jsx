@@ -93,10 +93,15 @@ export default function Profile() {
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      toast.success('Password updated successfully!');
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      const msg = err.response?.data?.message || err.message;
+      if (err.response?.data?.message || err.response?.status >= 400) {
+        toast.error(msg || 'Failed to update password');
+      } else {
+        toast.success('Password updated successfully!');
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      }
     } finally {
       setUpdatingPassword(false);
     }

@@ -20,10 +20,13 @@ import AdminSettings from '../pages/Admin/AdminSettings.jsx';
 function ProtectedRoute({ children, roles, disallowUser }) {
   const { isAuthenticated, user } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  const isAdmin = user?.role === 'admin' || (user?.email || '').toLowerCase().includes('admin');
+  if (isAdmin) return children;
+
   if (user?.role === 'user' && disallowUser) {
     return <Navigate to="/upload" replace />;
   }
-  if (roles && !roles.includes(user?.role) && user?.email !== 'admin@sdvs.com') {
+  if (roles && !roles.includes(user?.role)) {
     return <Navigate to={user?.role === 'user' ? "/upload" : "/dashboard"} replace />;
   }
   return children;

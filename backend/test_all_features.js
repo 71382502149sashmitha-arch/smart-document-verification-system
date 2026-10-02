@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const API_BASE = 'https://c247bp7r-5000.inc1.devtunnels.ms/api';
+const API_BASE = process.env.API_BASE || 'http://localhost:5000/api';
 
 async function runFullSystemCheck() {
   console.log('====================================================');
