@@ -22,11 +22,15 @@ import { UserCheck, FileCheck } from 'lucide-react';
 
 const ADMIN_NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/upload', label: 'Upload Document', icon: Upload },
+  { to: '/documents', label: 'My Documents', icon: FileText },
+  { to: '/verification-queue', label: 'Verification Queue', icon: CheckCircle },
+
   { divider: true, label: 'Administration' },
+
+  { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { to: '/admin/users', label: 'Users', icon: Users },
   { to: '/admin/documents', label: 'All Documents', icon: ClipboardList },
-  { to: '/verification-queue', label: 'Verification Management', icon: CheckCircle },
-  { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { to: '/admin/audit-logs', label: 'Audit Logs', icon: Shield },
   { to: '/admin/settings', label: 'Settings', icon: Settings },
 ];
