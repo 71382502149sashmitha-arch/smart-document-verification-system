@@ -6,11 +6,13 @@ import {
   Download, FileText, CheckCircle, XCircle, AlertTriangle, Shield,
   Clock, Image, Search, ChevronRight, FileCheck, Check, AlertCircle, RefreshCw
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 
 const TABS = ['Overview', 'Extracted Fields', 'Validation Checks', 'Issues & Remarks', 'Security & Quality'];
 
 export default function DocumentVerificationDetails() {
+  const { user } = useAuth();
   const [docs, setDocs] = useState([]);
   const [selectedDocId, setSelectedDocId] = useState(null);
   const [data, setData] = useState(null);
@@ -18,16 +20,22 @@ export default function DocumentVerificationDetails() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
 
+  const userRole = (user?.role || '').toLowerCase();
+  const userEmail = (user?.email || '').toLowerCase();
+  const isAdmin = userRole === 'admin' || userEmail.includes('admin');
+  const isVerifier = userRole === 'verifier' || userEmail.includes('verifier');
+  const isUser = !isAdmin && !isVerifier;
+
   const DEFAULT_DOCS = [
-    { id: 1, original_name: 'rahul_aadhaar_card.pdf', document_type: 'aadhaar', verification_status: 'verified', verification_score: 95, ocr_confidence: 94, created_at: new Date(Date.now() - 86400000 * 2).toISOString() },
-    { id: 2, original_name: 'rahul_pan_card.jpg', document_type: 'pan', verification_status: 'verified', verification_score: 92, ocr_confidence: 91, created_at: new Date(Date.now() - 86400000).toISOString() },
-    { id: 3, original_name: 'ananya_passport.png', document_type: 'passport', verification_status: 'needs_review', verification_score: 72, ocr_confidence: 78, created_at: new Date(Date.now() - 43200000).toISOString() },
-    { id: 4, original_name: 'ananya_employee_id.pdf', document_type: 'employee_id', verification_status: 'pending', verification_score: 88, ocr_confidence: 89, created_at: new Date().toISOString() }
+    { id: 1, original_name: 'rahul_aadhaar_card.pdf', document_type: 'aadhaar', verification_status: 'verified', verification_score: 95, ocr_confidence: 94, created_at: new Date(Date.now() - 86400000 * 2).toISOString(), user_name: 'Rahul Sharma', user_email: 'user1@sdvs.com' },
+    { id: 2, original_name: 'rahul_pan_card.jpg', document_type: 'pan', verification_status: 'verified', verification_score: 92, ocr_confidence: 91, created_at: new Date(Date.now() - 86400000).toISOString(), user_name: 'Rahul Sharma', user_email: 'user1@sdvs.com' },
+    { id: 3, original_name: 'ananya_passport.png', document_type: 'passport', verification_status: 'needs_review', verification_score: 72, ocr_confidence: 78, created_at: new Date(Date.now() - 43200000).toISOString(), user_name: 'Ananya Gupta', user_email: 'user2@sdvs.com' },
+    { id: 4, original_name: 'ananya_employee_id.pdf', document_type: 'employee_id', verification_status: 'pending', verification_score: 88, ocr_confidence: 89, created_at: new Date().toISOString(), user_name: 'Ananya Gupta', user_email: 'user2@sdvs.com' }
   ];
 
   useEffect(() => {
     loadUserDocuments();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (selectedDocId) {
@@ -35,21 +43,39 @@ export default function DocumentVerificationDetails() {
     }
   }, [selectedDocId]);
 
+  function filterDocsByRole(allDocs) {
+    if (isAdmin || isVerifier) return allDocs;
+    if (userEmail.includes('user1') || userEmail.includes('rahul')) {
+      return allDocs.filter(d => d.user_email === 'user1@sdvs.com' || (d.original_name || '').toLowerCase().includes('rahul'));
+    }
+    if (userEmail.includes('user2') || userEmail.includes('ananya')) {
+      return allDocs.filter(d => d.user_email === 'user2@sdvs.com' || (d.original_name || '').toLowerCase().includes('ananya'));
+    }
+    if (user?.email) {
+      const match = allDocs.filter(d => d.user_email === user.email || d.user_id === user.id);
+      if (match.length > 0) return match;
+    }
+    return [allDocs[0]];
+  }
+
   async function loadUserDocuments() {
     setLoadingList(true);
     try {
       const res = await documentsAPI.getMy({ limit: 50 });
       const fetched = res.data?.data?.documents || res.data?.documents;
       if (Array.isArray(fetched) && fetched.length > 0) {
-        setDocs(fetched);
-        setSelectedDocId(fetched[0].id);
+        const filtered = filterDocsByRole(fetched);
+        setDocs(filtered);
+        setSelectedDocId(filtered[0]?.id || fetched[0].id);
       } else {
-        setDocs(DEFAULT_DOCS);
-        setSelectedDocId(DEFAULT_DOCS[0].id);
+        const filtered = filterDocsByRole(DEFAULT_DOCS);
+        setDocs(filtered);
+        setSelectedDocId(filtered[0]?.id || DEFAULT_DOCS[0].id);
       }
     } catch {
-      setDocs(DEFAULT_DOCS);
-      setSelectedDocId(DEFAULT_DOCS[0].id);
+      const filtered = filterDocsByRole(DEFAULT_DOCS);
+      setDocs(filtered);
+      setSelectedDocId(filtered[0]?.id || DEFAULT_DOCS[0].id);
     } finally {
       setLoadingList(false);
     }

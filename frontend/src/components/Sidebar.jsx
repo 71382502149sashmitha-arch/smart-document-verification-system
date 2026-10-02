@@ -18,29 +18,35 @@ import {
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-const NAV_ITEMS = [
-  // Shared Dashboard
+import { UserCheck, FileCheck } from 'lucide-react';
+
+const ADMIN_NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { divider: true, label: 'Administration' },
+  { to: '/admin/users', label: 'Users', icon: Users },
+  { to: '/admin/documents', label: 'All Documents', icon: ClipboardList },
+  { to: '/verification-queue', label: 'Verification Management', icon: CheckCircle },
+  { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+  { to: '/admin/audit-logs', label: 'Audit Logs', icon: Shield },
+  { to: '/admin/settings', label: 'Settings', icon: Settings },
+];
 
-  // User Navigation
-  { to: '/upload', label: 'Upload Document', icon: Upload, role: 'user' },
-  { to: '/documents', label: 'My Documents', icon: FileText, role: 'user' },
-  { to: '/verification-queue', label: 'Verification Queue', icon: CheckCircle, role: 'user' },
-  { to: '/verification-details', label: 'Document Verification Details', icon: ClipboardCheck, role: 'user' },
+const VERIFIER_NAV = [
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/verification-queue', label: 'Verification Queue', icon: CheckCircle },
+  { to: '/verification-details', label: 'Document Verification Details', icon: ClipboardCheck },
+  { to: '/documents?status=verified', label: 'Verified Documents', icon: FileCheck },
+  { to: '/documents?status=needs_review', label: 'Pending / Needs Review', icon: FileText },
+  { to: '/profile', label: 'Profile', icon: UserCheck },
+];
 
-  // Verifier Navigation
-  { to: '/verification-queue', label: 'Verification Queue', icon: CheckCircle, role: 'verifier' },
-  { to: '/documents', label: 'Documents to Review', icon: FileText, role: 'verifier' },
-  { to: '/verification-details', label: 'Verification Details', icon: ClipboardCheck, role: 'verifier' },
-  { to: '/history', label: 'Verification History', icon: ClipboardList, role: 'verifier' },
-
-  // Admin Navigation
-  { divider: true, label: 'Administration', role: 'admin' },
-  { to: '/admin/analytics', label: 'Analytics', icon: BarChart3, role: 'admin' },
-  { to: '/admin/users', label: 'Users', icon: Users, role: 'admin' },
-  { to: '/admin/documents', label: 'All Documents', icon: ClipboardList, role: 'admin' },
-  { to: '/admin/audit-logs', label: 'Audit Logs', icon: Shield, role: 'admin' },
-  { to: '/admin/settings', label: 'Settings', icon: Settings, role: 'admin' },
+const USER_NAV = [
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/upload', label: 'Upload Document', icon: Upload },
+  { to: '/documents', label: 'My Documents', icon: FileText },
+  { to: '/verification-queue', label: 'Verification Queue', icon: CheckCircle },
+  { to: '/verification-details', label: 'Document Verification Details', icon: ClipboardCheck },
+  { to: '/profile', label: 'Profile', icon: UserCheck },
 ];
 
 export default function Sidebar() {
@@ -53,15 +59,8 @@ export default function Sidebar() {
 
   const isAdmin = userRole === 'admin' || userEmail.includes('admin');
   const isVerifier = userRole === 'verifier' || userEmail.includes('verifier');
-  const isUser = !isAdmin && !isVerifier;
 
-  const activeRole = isAdmin ? 'admin' : isVerifier ? 'verifier' : 'user';
-
-  const filteredNavItems = NAV_ITEMS.filter(item => {
-    // If item has no role property, it's shared across all roles
-    if (!item.role) return true;
-    return item.role === activeRole;
-  });
+  const filteredNavItems = isAdmin ? ADMIN_NAV : isVerifier ? VERIFIER_NAV : USER_NAV;
 
   return (
     <>
